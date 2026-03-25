@@ -142,6 +142,24 @@ CREATE INDEX IF NOT EXISTS "DocumentChunk_tenant_id_idx"   ON "DocumentChunk" ("
 -- Full-text search index on DocumentChunk content
 CREATE INDEX IF NOT EXISTS "DocumentChunk_content_fts_idx" ON "DocumentChunk" USING gin(to_tsvector('english', "content"));
 
+-- AgentMemory (must precede Embedding due to FK reference)
+CREATE TABLE IF NOT EXISTS "AgentMemory" (
+    "id"          UUID         NOT NULL DEFAULT uuid_generate_v4(),
+    "tenant_id"   TEXT         NOT NULL,
+    "agent_id"    TEXT         NOT NULL,
+    "key"         TEXT         NOT NULL,
+    "value"       TEXT         NOT NULL,
+    "memory_type" "MemoryType" NOT NULL DEFAULT 'SHORT_TERM',
+    "expires_at"  TIMESTAMPTZ,
+    "metadata"    JSONB,
+    "created_at"  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    "updated_at"  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    CONSTRAINT "AgentMemory_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "AgentMemory_tenant_agent_key_key" ON "AgentMemory" ("tenant_id", "agent_id", "key");
+CREATE INDEX IF NOT EXISTS "AgentMemory_tenant_id_agent_id_idx" ON "AgentMemory" ("tenant_id", "agent_id");
+CREATE INDEX IF NOT EXISTS "AgentMemory_memory_type_idx"         ON "AgentMemory" ("memory_type");
+
 -- Embedding
 CREATE TABLE IF NOT EXISTS "Embedding" (
     "id"                UUID        NOT NULL DEFAULT uuid_generate_v4(),
@@ -169,24 +187,6 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_embedding_hnsw
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_embedding_ivfflat
     ON "Embedding" USING ivfflat (embedding vector_cosine_ops)
     WITH (lists = 100);
-
--- AgentMemory
-CREATE TABLE IF NOT EXISTS "AgentMemory" (
-    "id"          UUID         NOT NULL DEFAULT uuid_generate_v4(),
-    "tenant_id"   TEXT         NOT NULL,
-    "agent_id"    TEXT         NOT NULL,
-    "key"         TEXT         NOT NULL,
-    "value"       TEXT         NOT NULL,
-    "memory_type" "MemoryType" NOT NULL DEFAULT 'SHORT_TERM',
-    "expires_at"  TIMESTAMPTZ,
-    "metadata"    JSONB,
-    "created_at"  TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    "updated_at"  TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    CONSTRAINT "AgentMemory_pkey" PRIMARY KEY ("id")
-);
-CREATE UNIQUE INDEX IF NOT EXISTS "AgentMemory_tenant_agent_key_key" ON "AgentMemory" ("tenant_id", "agent_id", "key");
-CREATE INDEX IF NOT EXISTS "AgentMemory_tenant_id_agent_id_idx" ON "AgentMemory" ("tenant_id", "agent_id");
-CREATE INDEX IF NOT EXISTS "AgentMemory_memory_type_idx"         ON "AgentMemory" ("memory_type");
 
 -- ApiKey
 CREATE TABLE IF NOT EXISTS "ApiKey" (
