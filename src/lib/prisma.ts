@@ -68,7 +68,7 @@ function createPrismaClient(): PrismaClient {
       writeMutations.includes(params.action)
     ) {
       const data = (params.args as { data?: Record<string, unknown> })?.data;
-      if (data && !data['tenant_id']) {
+      if (data && !('tenant_id' in data)) {
         throw new Error(
           `tenant_id is required for ${params.model}.${params.action}`,
         );
