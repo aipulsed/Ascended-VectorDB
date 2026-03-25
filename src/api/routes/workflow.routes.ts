@@ -46,7 +46,7 @@ workflowRouter.post(
       const workflow = await workflowRepository.create(req.tenantId, {
         name: body.name,
         description: body.description,
-        definition: body.definition,
+        definition: body.definition as object,
         status: body.status,
       });
       res.status(201).json(workflow);
