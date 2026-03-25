@@ -1,9 +1,7 @@
-/**
- * Prisma schema for @ascendstack/vectordb.
- * Defines all database models for the AscendStack vector database,
- * including multi-tenant tables, workflow execution state, vector embeddings,
- * agent memory, and document storage with pgvector support.
- */
+// Prisma schema for @ascendstack/vectordb.
+// Defines all database models for the AscendStack vector database,
+// including multi-tenant tables, workflow execution state, vector embeddings,
+// agent memory, and document storage with pgvector support.
 
 generator client {
   provider        = "prisma-client-js"
