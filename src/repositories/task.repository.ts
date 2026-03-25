@@ -46,10 +46,13 @@ export class TaskRepository extends BaseRepository<Task, TaskCreateInput, TaskUp
 
   /** Updates a task record. */
   async update(tenantId: string, id: string, data: TaskUpdateInput): Promise<Task> {
-    return prisma.task.update({
-      where: { id },
+    await prisma.task.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.task.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('Task not found');
+    return updated;
   }
 
   /** Deletes a task record. */

@@ -51,10 +51,13 @@ export class WorkflowRepository extends BaseRepository<Workflow, WorkflowCreateI
 
   /** Updates a workflow by ID for the given tenant. */
   async update(tenantId: string, id: string, data: WorkflowUpdateInput): Promise<Workflow> {
-    return prisma.workflow.update({
-      where: { id },
+    await prisma.workflow.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.workflow.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('Workflow not found');
+    return updated;
   }
 
   /** Deletes a workflow by ID for the given tenant. */

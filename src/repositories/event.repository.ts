@@ -47,10 +47,13 @@ export class EventRepository extends BaseRepository<Event, EventCreateInput, Eve
 
   /** Updates an event record. */
   async update(tenantId: string, id: string, data: EventUpdateInput): Promise<Event> {
-    return prisma.event.update({
-      where: { id },
+    await prisma.event.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.event.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('Event not found');
+    return updated;
   }
 
   /** Deletes an event record. */

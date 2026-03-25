@@ -46,10 +46,13 @@ export class DocumentChunkRepository extends BaseRepository<DocumentChunk, Chunk
 
   /** Updates a document chunk. */
   async update(tenantId: string, id: string, data: ChunkUpdateInput): Promise<DocumentChunk> {
-    return prisma.documentChunk.update({
-      where: { id },
+    await prisma.documentChunk.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.documentChunk.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('DocumentChunk not found');
+    return updated;
   }
 
   /** Deletes a document chunk. */

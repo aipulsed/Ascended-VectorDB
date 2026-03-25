@@ -49,10 +49,13 @@ export class DocumentRepository extends BaseRepository<Document, DocumentCreateI
 
   /** Updates a document record. */
   async update(tenantId: string, id: string, data: DocumentUpdateInput): Promise<Document> {
-    return prisma.document.update({
-      where: { id },
+    await prisma.document.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.document.findFirst({ where: { id, tenant_id: tenantId, deleted_at: null } });
+    if (!updated) throw new Error('Document not found');
+    return updated;
   }
 
   /** Hard-deletes a document record (prefer softDelete for user-facing operations). */
@@ -62,10 +65,13 @@ export class DocumentRepository extends BaseRepository<Document, DocumentCreateI
 
   /** Soft-deletes a document by setting deleted_at timestamp. */
   async softDelete(tenantId: string, id: string): Promise<Document> {
-    return prisma.document.update({
-      where: { id },
+    await prisma.document.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { tenant_id: tenantId, deleted_at: new Date() },
     });
+    const updated = await prisma.document.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('Document not found');
+    return updated;
   }
 
   /** Returns documents filtered by processing status. */

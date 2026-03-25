@@ -5,6 +5,7 @@
  * Hybrid search combines cosine similarity with PostgreSQL full-text search.
  */
 
+import { randomUUID } from 'crypto';
 import { Embedding } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
@@ -67,10 +68,13 @@ export class EmbeddingRepository extends BaseRepository<
     id: string,
     data: Prisma.EmbeddingUncheckedUpdateInput,
   ): Promise<Embedding> {
-    return prisma.embedding.update({
-      where: { id },
+    await prisma.embedding.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.embedding.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('Embedding not found');
+    return updated;
   }
 
   /** Deletes an embedding record. */
@@ -88,7 +92,7 @@ export class EmbeddingRepository extends BaseRepository<
     embeddingVector: number[],
   ): Promise<Embedding> {
     const embeddingStr = `[${embeddingVector.join(',')}]`;
-    const id = crypto.randomUUID();
+    const id = randomUUID();
 
     await prisma.$executeRaw`
       INSERT INTO "Embedding" (

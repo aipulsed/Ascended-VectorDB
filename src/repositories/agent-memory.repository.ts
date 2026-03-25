@@ -57,10 +57,13 @@ export class AgentMemoryRepository extends BaseRepository<AgentMemory, MemoryCre
 
   /** Updates a memory entry. */
   async update(tenantId: string, id: string, data: MemoryUpdateInput): Promise<AgentMemory> {
-    return prisma.agentMemory.update({
-      where: { id },
+    await prisma.agentMemory.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.agentMemory.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('AgentMemory not found');
+    return updated;
   }
 
   /** Deletes a memory entry by ID. */

@@ -51,10 +51,13 @@ export class ExecutionRepository extends BaseRepository<Execution, ExecutionCrea
 
   /** Updates an execution record. */
   async update(tenantId: string, id: string, data: ExecutionUpdateInput): Promise<Execution> {
-    return prisma.execution.update({
-      where: { id },
+    await prisma.execution.updateMany({
+      where: { id, tenant_id: tenantId },
       data: { ...data, tenant_id: tenantId },
     });
+    const updated = await prisma.execution.findFirst({ where: { id, tenant_id: tenantId } });
+    if (!updated) throw new Error('Execution not found');
+    return updated;
   }
 
   /** Deletes an execution record. */
