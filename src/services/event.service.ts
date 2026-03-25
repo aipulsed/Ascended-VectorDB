@@ -6,6 +6,7 @@
 
 import { Event, Prisma } from '@prisma/client';
 import { eventRepository } from '../repositories/event.repository';
+import { prisma } from '../lib/prisma';
 import { logger } from '../lib/logger';
 import { EventBusMessage, PaginatedResult, PaginationParams } from '../types';
 
@@ -62,20 +63,16 @@ export class EventService {
     params: PaginationParams,
   ): Promise<PaginatedResult<Event>> {
     try {
-      // Delegate to the base list and filter in memory for now;
-      // for high-throughput, consider adding a direct DB query.
-      const all = await eventRepository.list(tenantId, { page: 1, limit: 1000 });
-      const filtered = all.data.filter((e) => e.type === type);
       const { page, limit } = params;
-      const start = (page - 1) * limit;
-      const slice = filtered.slice(start, start + limit);
-      return {
-        data: slice,
-        total: filtered.length,
-        page,
-        limit,
-        hasMore: start + limit < filtered.length,
-      };
+      const skip = (page - 1) * limit;
+      const where: Prisma.EventWhereInput = { tenant_id: tenantId, type };
+
+      const [data, total] = await prisma.$transaction([
+        prisma.event.findMany({ where, skip, take: limit, orderBy: { timestamp: 'desc' } }),
+        prisma.event.count({ where }),
+      ]);
+
+      return { data, total, page, limit, hasMore: skip + limit < total };
     } catch (error) {
       logger.error('Failed to get events by type', { tenantId, type, error });
       throw error;
